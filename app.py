@@ -1,0 +1,137 @@
+import streamlit as st
+from database import init_db, get_connection
+from auth import login
+import bcrypt
+from datetime import datetime
+
+from views.lesson_editor import render_lesson_editor
+from views.member_dashboard import render_member_dashboard
+from views.pastor_dashboard import render_pastor_dashboard
+from views.user_manager import render_user_manager
+from views.super_admin import render_super_admin_panel
+from views.cohort_manager import render_cohort_manager
+
+
+# Initialize database
+init_db()
+
+# ---------------- TEMP SUPER ADMIN BOOTSTRAP ----------------
+conn = get_connection()
+cursor = conn.cursor()
+
+cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
+admin_exists = cursor.fetchone()
+
+if not admin_exists:
+    hashed_password = bcrypt.hashpw(
+        "Admin123!".encode(),
+        bcrypt.gensalt()
+    ).decode()
+
+    cursor.execute("""
+        INSERT INTO users (name, email, password_hash, role, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        "Super Admin",
+        "admin@kff.com",
+        hashed_password,
+        "super_admin",
+        datetime.now().isoformat()
+    ))
+
+    conn.commit()
+
+conn.close()
+# ------------------------------------------------------------
+
+
+st.set_page_config(page_title="Kingdom Family Fellowship", layout="wide")
+
+st.title("Kingdom Family Fellowship")
+st.subheader("8-Week New Member Orientation")
+
+if "user" not in st.session_state:
+    st.session_state.user = None
+
+# ---------------- LOGIN ----------------
+if not st.session_state.user:
+
+    st.markdown("### Login")
+
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if login(email, password):
+            st.success("Login successful")
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+# ---------------- APP ----------------
+else:
+    user = st.session_state.user
+    role = user["role"]
+
+    st.sidebar.write(f"Logged in as: {user['name']}")
+
+    # ---------------- MEMBER ----------------
+    if role == "member":
+        page = st.sidebar.radio("Navigation", [
+            "Dashboard"
+        ])
+
+        if page == "Dashboard":
+            render_member_dashboard()
+
+    # ---------------- PASTOR ----------------
+    elif role == "pastor":
+        page = st.sidebar.radio("Navigation", [
+            "Dashboard",
+            "User Manager",
+            "Cohort Manager",
+            "Lesson Editor",
+            "Reporting"
+        ])
+
+        if page == "Dashboard":
+            render_pastor_dashboard()
+        elif page == "User Manager":
+            render_user_manager(role)
+        elif page == "Cohort Manager":
+            render_cohort_manager()
+        elif page == "Lesson Editor":
+            render_lesson_editor()
+        elif page == "Reporting":
+            from views.reporting_dashboard import render_reporting_dashboard
+            render_reporting_dashboard()
+
+    # ---------------- SUPER ADMIN ----------------
+    elif role == "super_admin":
+        page = st.sidebar.radio("Navigation", [
+            "System Panel",
+            "Pastor Dashboard",
+            "User Manager",
+            "Cohort Manager",
+            "Lesson Editor",
+            "Reporting"
+        ])
+
+        if page == "System Panel":
+            render_super_admin_panel()
+        elif page == "Pastor Dashboard":
+            render_pastor_dashboard()
+        elif page == "User Manager":
+            render_user_manager(role)
+        elif page == "Cohort Manager":
+            render_cohort_manager()
+        elif page == "Lesson Editor":
+            render_lesson_editor()
+        elif page == "Reporting":
+            from views.reporting_dashboard import render_reporting_dashboard
+            render_reporting_dashboard()
+
+    # Logout
+    if st.sidebar.button("Logout"):
+        st.session_state.user = None
+        st.rerun()
