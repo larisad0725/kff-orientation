@@ -3,6 +3,8 @@ import streamlit as st
 import bcrypt
 from datetime import datetime
 st.write("APP VERSION: SETUP MODE ACTIVE")
+st.write("ENV SETUP KEY:", os.getenv("SETUP_KEY"))
+st.write("URL SETUP KEY:", st.query_params.get("setup_key"))
 
 from database import init_db, get_connection
 from auth import login
@@ -176,3 +178,4 @@ else:
         st.session_state.user = None
 
         st.rerun()
+
