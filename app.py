@@ -29,6 +29,9 @@ def _ph() -> str:
 setup_key_env = os.getenv("SETUP_KEY", "").strip()
 setup_key_url = (st.query_params.get("setup_key") or "").strip()
 
+# Tiny debug (remove after it works)
+st.caption(f"DEBUG setup_key_url={'set' if bool(setup_key_url) else 'missing'} | setup_key_env={'set' if bool(setup_key_env) else 'missing'}")
+
 def upsert_super_admin(name: str, email: str, password: str) -> None:
     ph = _ph()
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
@@ -77,7 +80,7 @@ if setup_key_env and setup_key_url and setup_key_env == setup_key_url:
             st.stop()
 
         upsert_super_admin(name=name, email=email, password=password)
-        st.success("Super admin created/reset successfully ✅")
+        st.success("✅ Super admin created/reset successfully.")
         st.info("Now go to the normal app URL (no setup_key) and log in.")
         st.stop()
 
