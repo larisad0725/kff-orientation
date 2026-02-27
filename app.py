@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import bcrypt
 from datetime import datetime
+st.write("APP VERSION: SETUP MODE ACTIVE")
 
 from database import init_db, get_connection
 from auth import login
@@ -173,4 +174,5 @@ else:
 
     if st.sidebar.button("Logout"):
         st.session_state.user = None
+
         st.rerun()
