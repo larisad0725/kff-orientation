@@ -2,6 +2,7 @@ import streamlit as st
 
 from database import init_db
 from auth import login
+from views.track_manager import render_track_manager
 
 from views.lesson_editor import render_lesson_editor
 from views.member_dashboard import render_member_dashboard
@@ -97,4 +98,5 @@ else:
 
     if st.sidebar.button("Logout"):
         st.session_state.user = None
+
         st.rerun()
